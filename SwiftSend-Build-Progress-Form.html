@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SwiftSend Build Progress Form</title>
+<style>
+  :root {
+    --bg: #f4f1ec;
+    --surface: #ffffff;
+    --muted: #7b746a;
+    --text: #1f1a14;
+    --accent: #e4b638;
+    --accent-strong: #a87d1e;
+    --border: #d9d3c7;
+    --shadow: 0 8px 24px rgba(20, 16, 8, .08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+  }
+  header.page {
+    background: #171717;
+    color: #f7f2e8;
+    padding: 34px 24px;
+    border-bottom: 6px solid var(--accent);
+  }
+  header.page h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: -.02em; }
+  header.page p { margin: 0; color: #b8b0a4; font-size: 14px; }
+  .shell { max-width: 900px; margin: 0 auto; padding: 26px 18px 60px; }
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px 22px;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  legend {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    margin: 0 0 14px;
+  }
+  h2 { margin: 0 0 14px; font-size: 17px; font-weight: 800; }
+  .field { margin: 20px 0; }
+  .field label { display: block; font-size: 12px; font-weight: 700; margin: 0 0 6px; }
+  .field .label-desc { font-size: 11px; color: var(--muted); font-weight: 400; display: block; margin-bottom: 8px; }
+  input[type="text"], input[type="email"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%;
+    font: inherit;
+    padding: 13px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fbfaf8;
+    color: var(--text);
+    resize: vertical;
+  }
+  textarea { min-height: 112px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent-strong); }
+  input[type="range"] { width: 100%; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .chip {
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--muted);
+  }
+  .chip.active { background: var(--accent); border-color: var(--accent-strong); color: #17140c; }
+  .file-inputs { display: flex; flex-direction: column; gap: 10px; }
+  .file-inputs .file-card {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .file-card:hover { border-color: var(--accent-strong); }
+  .file-card input { border: 0; width: 0; padding: 0; position: absolute; }
+  .file-card .file-title { font-weight: 700; color: var(--text); }
+  .file-card .file-sub { color: var(--muted); font-size: 11px; margin-top: 3px; }
+  .file-card ul { list-style: none; padding: 0; margin: 8px 0 0; }
+  .file-card ul li { font-size: 11px; color: var(--muted); padding: 2px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 800; }
+  tr.total td { font-weight: 800; color: var(--text); }
+  .progress-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+  .progress-row input[type=range] { flex: 1; margin: 0; }
+  .checkbox-group { display: flex; flex-direction: column; gap: 8px; }
+  .checkbox-group label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .actions { margin-top: 26px; display: flex; gap: 12px; align-items: center; }
+  button {
+    font: inherit;
+    border-radius: 12px;
+    padding: 11px 18px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 800;
+  }
+  button#submit { background: var(--accent); border-color: var(--accent-strong); color: #17140c; }
+  button#submit:hover { background: #e4b638; filter: brightness(1.06); }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  #status {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid;
+  }
+  #status.success { background: #e8f7ef; border-color: #b5e2c6; color: #176e48; }
+  #status.error { background: #fdebeb; border-color: #eec5c5; color: #b42318; }
+  #summary {
+    background: #fbf9f5;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-top: 18px;
+    font-size: 13px;
+  }
+  #summary dt { font-weight: 800; float: left; width: 52%; }
+  #summary dd { margin: 0; float: left; width: 48%; }
+  #summary::after { content: ""; display: table; clear: both; }
+  @media (min-width: 640px) { header.page { padding: 40px 32px; } }
+</style>
+</head>
+<body>
+<header class="page">
+  <div class="shell" style="padding:0; max-width:900px;">
+    <h1>SwiftSend Build Progress Form</h1>
+    <p>Independent form — fill in your SwiftSend build progress, upload evidence documents and Loom recordings, then save &amp; submit. Everything is saved in your browser and downloaded as JSON.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <form id="swiftsendForm" autocomplete="off">
+
+    <!-- 1. Project & Team Information -->
+    <section>
+      <legend>1. Project &amp; Team Information</legend>
+      <div class="field"><label for="projectName">Project name</label><input id="projectName" name="projectName" type="text" value="SwiftSend"></div>
+      <div class="field"><label for="builderTeam">Builder / team name</label><input id="builderTeam" name="builderTeam" type="text" value="SwiftSendvillas"></div>
+      <div class="field"><label for="contactName">Primary contact (name)</label><input id="contactName" name="contactName" type="text" value="Valdone Ojwang"></div>
+      <div class="field"><label for="contactEmail">Primary contact (email)</label><input id="contactEmail" name="contactEmail" type="email" value="ojwangjunior006@gmail.com"></div>
+      <div class="field"><label for="ambassadorChapter">Ambassador chapter</label><input id="ambassadorChapter" name="ambassadorChapter" type="text" value="Kenya"></div>
+      <div class="field"><label for="chapterLead">Ambassador chapter lead</label><input id="chapterLead" name="chapterLead" type="text" value="David Ogoegbunem"></div>
+      <div class="field"><label for="dateSubmitted">Date submitted</label><input id="dateSubmitted" name="dateSubmitted" type="text" value="23rd September 2026"></div>
+      <div class="field"><label for="sprintStart">Suggested sprint start date</label><input id="sprintStart" name="sprintStart" type="text" value="30th September 2026"></div>
+    </section>
+
+    <!-- 2. Countries -->
+    <section>
+      <legend>2. Countries working with from the start <span style="color:var(--accent-strong); font-weight:800;">(corrected: Uganda, Tanzania, Kenya, Nigeria and USA)</span></legend>
+      <div class="field">
+        <div class="chips" id="countriesRoot"></div>
+      </div>
+    </section>
+
+    <!-- 3. SwiftSend Build Progress -->
+    <section>
+      <legend>3. SwiftSend Build Progress</legend>
+      <div class="field">
+        <label for="buildStatus">Overall status</label>
+        <select id="buildStatus" name="buildStatus">
+          <option value="not_started">Not started</option>
+          <option value="in_progress" selected>In progress</option>
+          <option value="on_track">On track</option>
+          <option value="delayed">Delayed</option>
+          <option value="blocked">Blocked</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Progress % <span id="progressValue" style="color:var(--accent-strong); font-weight:800;">0</span>%</label>
+        <div class="progress-row">
+          <input type="range" id="progressPercent" name="progressPercent" min="0" max="100" value="0">
+          <input type="number" id="progressNumber" name="progressPercentNumber" min="0" max="100" value="0" style="flex:0 0 90px; text-align:center;" aria-label="Progress percent">
+        </div>
+      </div>
+      <div class="field"><label for="progressNotes">Progress description / notes</label><textarea id="progressNotes" name="progressNotes" rows="6"></textarea></div>
+      <div class="field"><label for="milestonesCompleted">Milestones completed so far (list)</label><textarea id="milestonesCompleted" name="milestonesCompleted" rows="6"></textarea></div>
+      <div class="field"><label for="workDoneThisSprint">Work done (chronological log)</label><textarea id="workDoneThisSprint" name="workDoneThisSprint" rows="9"></textarea></div>
+      <div class="field"><label for="deliverablesTouchedSoFar">Deliverables touched so far (of the four below)</label><input id="deliverablesTouchedSoFar" name="deliverablesTouchedSoFar" type="text" placeholder="e.g. Kenya Corridor, USSD Pilot"></div>
+      <div class="field"><label for="blockersOrIssues">Current blockers or issues (or none)</label><textarea id="blockersOrIssues" name="blockersOrIssues" rows="6"></textarea></div>
+      <div class="field"><label for="nextStepsNotes">Next steps / open questions (or none)</label><textarea id="nextStepsNotes" name="nextStepsNotes" rows="6"></textarea></div>
+    </section>
+
+    <!-- 4. Deliverables -->
+    <section>
+      <legend>4. Deliverables (30-day scope, from the SwiftSend Instaward SOW)</legend>
+      <div id="deliverablesRoot"></div>
+    </section>
+
+    <!-- 5. Supporting evidence documents -->
+    <section>
+      <legend>5. Supporting evidence documents</legend>
+      <div class="field">
+        <p style="font-size:13px; color:var(--muted); margin:0 0 8px;">Upload PDFs, docs, spreadsheets, screenshots or images for each deliverable. Files are read into the form as base64.</p>
+        <div class="file-inputs" id="evidenceDocsRoot"></div>
+        <div class="file-inputs" id="evidenceDocsGeneralRoot"></div>
+      </div>
+    </section>
+
+    <!-- 6. Recordings -->
+    <section>
+      <legend>6. Recordings (e.g., Loom recordings, demos)</legend>
+      <div class="field">
+        <p style="font-size:13px; color:var(--muted); margin:0 0 8px;">Upload video/audio recordings of demos or walkthroughs. Loom downloads are commonly <code>.mp4</code> — upload the file directly.</p>
+        <div class="file-inputs" id="recordingsRoot"></div>
+        <div class="file-inputs" id="recordingsGeneralRoot"></div>
+      </div>
+    </section>
+
+    <!-- 7. Budget -->
+    <section>
+      <legend>7. Deliverable-aligned budget request</legend>
+      <div class="field"><p style="font-size:13px; color:var(--muted); margin:0 0 8px;">Costs are editable before you save.</p>
+        <table id="budgetTable"><thead><tr><th>Expense / activity</th><th>Deliverable supported</th><th style="text-align:right;">Cost (USD)</th></tr></thead><tbody id="budgetRowsRoot"></tbody><tfoot><tr><td style="text-align:right;" colspan="2">TOTAL</td><td id="budgetTotal" style="text-align:right; font-weight:800;">$0</td></tr></tfoot></table>
+      </div>
+      <div class="field"><table id="budgetSummaryTable"><thead><tr><th>Budget category</th><th style="text-align:right;">Amount (USD)</th></tr></thead><tbody id="budgetSummaryRowsRoot"></tbody><tfoot><tr><td style="font-weight:800;">TOTAL</td><td id="budgetSummaryTotal" style="text-align:right; font-weight:800;">$0</td></tr></tfoot></table></div>
+    </section>
+
+    <!-- 8. Timeline -->
+    <section>
+      <legend>8. 30-day execution plan &amp; timeline</legend>
+      <div id="timelineRoot"></div>
+    </section>
+
+    <!-- 9. Evidence verification -->
+    <section>
+      <legend>9. Evidence of completion &amp; verification checklist</legend>
+      <div id="evidenceRowsRoot"></div>
+    </section>
+
+    <!-- 10. Next steps -->
+    <section>
+      <legend>10. Next-step alignment</legend>
+      <div class="field"><p style="font-size:13px; color:var(--muted); margin:0 0 8px;">Anticipated next step after completion:</p>
+        <div class="checkbox-group" id="nextStepRoot"></div>
+        <div class="field"><label for="nextStepOther">Other (describe)</label><input id="nextStepOther" type="text" placeholder="e.g. Apply for follow-on Instaward or seek other ecosystem support"></div>
+      </div>
+    </section>
+
+    <!-- 11. Out of scope -->
+    <section>
+      <legend>11. Out-of-scope – explicitly not included</legend>
+      <div class="field"><div class="checkbox-group" id="outOfScopeRoot"></div></div>
+    </section>
+
+    <!-- 12. Constraints -->
+    <section>
+      <legend>12. Instawards constraints acknowledgement</legend>
+      <div class="field"><p style="font-size:13px; color:var(--muted); margin:0 0 8px;">By saving this form, you acknowledge:</p>
+        <div class="checkbox-group" id="constraintsRoot"></div>
+        <div class="field"><label><input type="checkbox" id="constraintsAck"> I have read and accept this and acknowledge the constraints above.</label></div>
+      </div>
+    </section>
+
+    <!-- Summary + actions -->
+    <section>
+      <h2>Ready to save &amp; submit</h2>
+      <dl id="summary" style="margin:0;"></dl>
+      <div class="actions">
+        <button type="submit" id="submit">Save &amp; submit</button>
+        <button type="button" id="downloadJson">Download as JSON</button>
+        <button type="button" id="resetForm">Reset form</button>
+      </div>
+      <div id="status" role="status" style="display:none;"></div>
+    </section>
+  </form>
+</div>
+
+<script>
+"use strict";
+
+const STORAGE_KEY = "swiftsend.build-progress.form";
+
+const COUNTRIES = ["Uganda", "Tanzania", "Kenya", "Nigeria", "USA"];
+
+const PROBLEM_STATEMENT = "Cross-border remittances remain slow, expensive, and difficult to access for many of the people who depend on them. Today, sending money internationally can involve 5–6 intermediaries, opaque fees, fragmented banking systems, and settlement times of 2–5 days. On the receiving side, many services assume that users have smartphones and reliable internet access, creating an additional barrier for people who rely on feature phones and basic mobile connectivity. What is currently preventing progress is not simply the ability to move money across borders, but the lack of a simple layer that connects global senders to local payout systems while hiding the complexity of the underlying infrastructure. Existing rails remain fragmented, while users are left dealing with the cost, delays, and complexity created by those systems. What is missing is a remittance experience that combines fast settlement, transparent pricing, local-currency payout, and access across smartphones, web, and USSD.";
+
+const OBJECTIVE_STATEMENT = "At the end of 30 days, SwiftSend will have a functional MVP for cross-border remittances with the initial Kenya corridor validated, Stellar anchor/on-off-ramp integration established, and the USSD access flow piloted. The system will demonstrate the movement of funds from an international sender through Stellar settlement to a local-currency payout, with transparent pricing and recipient access across web, mobile, and USSD.";
+
+const DELIVERABLES = [
+  {
+    id: "kenya-corridor",
+    title: "Deliverable 1 – Kenya Corridor & Stellar Anchor Integration",
+    description: "Establish and validate the initial USA, Uganda, Tanzania, Nigeria → Kenya remittance corridor by integrating the required Stellar anchor on/off-ramp infrastructure and connecting the sender flow to local KES payout rails.",
+    why: "This validates the core SwiftSend settlement path and demonstrates that international value can move through Stellar and reach a recipient in local currency without exposing the user to the underlying blockchain complexity.",
+    evidenceType: "Live demo link, screenshots, integration documentation, and relevant Stellar transaction records",
+    status: "pending"
+  },
+  {
+    id: "ussd-pilot",
+    title: "Deliverable 2 – USSD Access Pilot",
+    description: "Implement and pilot the SwiftSend USSD access flow using the planned *384# syntax, allowing recipients using feature phones to access the remittance experience without requiring a smartphone or internet connection.",
+    why: "USSD is a key part of SwiftSend's inclusion strategy. It allows the service to reach recipients who are excluded by smartphone and connectivity requirements.",
+    evidenceType: "USSD demonstration, screenshots, test results, and short demo video",
+    status: "pending"
+  },
+  {
+    id: "e2e-validation",
+    title: "Deliverable 3 – End-to-End Kenya Corridor Validation",
+    description: "Execute and document an end-to-end MVP transfer covering the international sender, on-ramp, Stellar settlement, destination anchor and local KES payout, with the transfer experience and payout flow validated.",
+    why: "This turns the work from an integration exercise into a demonstrable remittance product and provides evidence that the complete flow works across the infrastructure SwiftSend is designed to connect.",
+    evidenceType: "End-to-end demo, transaction records/tx hashes, screenshots, and pilot report",
+    status: "pending"
+  },
+  {
+    id: "evidence-docs",
+    title: "Evidence, Documentation & Pilot Report",
+    description: "Document the completed corridor validation, including the end-to-end transfer flow, Stellar settlement, local payout, USSD pilot results, and relevant transaction or integration evidence. Produce a concise implementation report and demonstration material covering what was built, what was validated, and any limitations identified during the 30-day pilot.",
+    why: "This provides verifiable evidence that the SwiftSend MVP works beyond the development environment and creates a clear foundation for the next phase of corridor expansion.",
+    evidenceType: "Pilot report, implementation documentation, screenshots, and demo materials",
+    status: "pending"
+  }
+];
+
+const OUT_OF_SCOPE = [
+  "Production implementation for corridors beyond the working countries listed above is not included in this Instaward.",
+  "Full Production-Scale Operations – Long-term 24/7 operations, customer support, liquidity management, ongoing infrastructure management, and permanent operational staffing are outside the scope.",
+  "Native Mobile Applications – Development and publication of dedicated Android or iOS applications are not included. The MVP will focus on the supported web and USSD experiences.",
+  "Advanced KYC/AML Infrastructure – Building a proprietary KYC/AML platform, compliance engine, or regulatory infrastructure is outside the scope. Where required, existing compliant infrastructure and partner processes will be used.",
+  "Full Commercial Launch – A nationwide commercial launch, large-scale customer acquisition campaign, paid marketing campaign, or full public rollout is not included.",
+  "Cryptocurrency Trading – SwiftSend will not provide cryptocurrency trading, speculative investment features, or an exchange marketplace. Stellar-based assets are used as settlement rails for remittance.",
+  "Custom Banking Infrastructure – Building or replacing banking infrastructure, issuing banking products, or obtaining banking licences is outside the scope.",
+  "Non-MVP Product Features – Features such as loyalty programs, lending, savings, advanced analytics, multi-currency wallets, or other non-essential product features will be deferred to future phases."
+];
+
+const BUDGET_ROWS = [
+  { activity: "Stellar anchor / on-off-ramp integration", deliverable: "Kenya Corridor & Stellar Anchor Integration", cost: 1200 },
+  { activity: "Kenya KES payout integration & corridor configuration", deliverable: "Kenya Corridor Integration", cost: 600 },
+  { activity: "USSD development & gateway integration", deliverable: "USSD Access Pilot", cost: 900 },
+  { activity: "End-to-end transaction testing & test liquidity", deliverable: "Kenya Corridor Validation", cost: 500 },
+  { activity: "Cloud hosting, deployment & technical infrastructure", deliverable: "All deliverables", cost: 400 },
+  { activity: "Security, API testing & integration troubleshooting", deliverable: "All deliverables", cost: 400 },
+  { activity: "Pilot monitoring, transaction evidence & documentation", deliverable: "End-to-End Validation & Pilot Report", cost: 300 },
+  { activity: "Demo video, screenshots & final evidence package", deliverable: "Evidence & Pilot Report", cost: 200 },
+  { activity: "Contingency / unforeseen integration costs", deliverable: "All deliverables", cost: 500 }
+];
+
+const BUDGET_SUMMARY = [
+  { category: "Core Stellar & payment integration", amount: 1800 },
+  { category: "USSD implementation", amount: 900 },
+  { category: "Testing & validation", amount: 500 },
+  { category: "Infrastructure & security", amount: 800 },
+  { category: "Documentation & demonstration", amount: 500 },
+  { category: "Contingency", amount: 500 }
+];
+
+const WEEKLY_PLAN = [
+  { week: "Week 1", plannedWork: "Set up and validate the initial corridor architecture, confirm Stellar anchor/on-off-ramp integration requirements, and prepare the USSD access flow and required technical infrastructure.", expectedOutput: "Corridor integration environment ready, anchor integration in place, and USSD flow prepared for testing." },
+  { week: "Week 2", plannedWork: "Implement and test the international sender-to-corridor payout flow, including Stellar settlement and destination anchor connectivity. Begin USSD pilot testing with the planned *384# flow.", expectedOutput: "Working transfer flow from international sender through Stellar to local KES payout, with initial USSD tests completed." },
+  { week: "Week 3", plannedWork: "Run end-to-end corridor testing, identify and resolve integration issues, and validate the recipient experience across the supported channels.", expectedOutput: "Validated end-to-end remittance flow with documented Stellar settlement, local payout, and USSD results." },
+  { week: "Week 4", plannedWork: "Complete the pilot validation, document transaction and integration evidence, prepare the implementation report, and produce demonstration material covering the completed MVP.", expectedOutput: "Completed corridor pilot, evidence package, implementation report, and demonstration of the working SwiftSend MVP." }
+];
+
+const EVIDENCE_ROWS = DELIVERABLES.map((deliverable, index) => ({
+  deliverable: index === 3 ? "Evidence & Pilot Report" : deliverable.title.replace(/^Deliverable \d+[^–]*– /, ""),
+  evidenceType: deliverable.evidenceType,
+  description: "Record the completed corridor validation, including the end-to-end transfer flow, Stellar settlement, local payout, USSD pilot results, and relevant transaction or integration evidence.",
+  evidencePresent: false,
+  evidencePartial: false,
+  evidenceMissing: true,
+  comments: ""
+}));
+
+const initialState = () => ({
+  projectName: "SwiftSend",
+  builderTeam: "SwiftSendvillas",
+  contactName: "Valdone Ojwang",
+  contactEmail: "ojwangjunior006@gmail.com",
+  ambassadorChapter: "Kenya",
+  chapterLead: "David Ogoegbunem",
+  dateSubmitted: "23rd September 2026",
+  sprintStart: "30th September 2026",
+  countries: [...COUNTRIES],
+  buildStatus: "in_progress",
+  progressPercent: 0,
+  progressNotes: "",
+  milestonesCompleted: "",
+  workDoneThisSprint: "",
+  deliverablesTouchedSoFar: "",
+  blockersOrIssues: "",
+  nextStepsNotes: "",
+  problemStatement: PROBLEM_STATEMENT,
+  objectiveStatement: OBJECTIVE_STATEMENT,
+  deliverables: DELIVERABLES.map((d) => ({ ...d })),
+  outOfScope: OUT_OF_SCOPE.map(() => true),
+  budget: BUDGET_ROWS.map((row) => ({ ...row })),
+  budgetSummary: BUDGET_SUMMARY.map((row) => ({ ...row })),
+  timeline: WEEKLY_PLAN.map((row) => ({ ...row })),
+  evidenceRows: EVIDENCE_ROWS.map((row) => ({ ...row })),
+  nextStep: { applyScfBuild: true, continueDev: false, followOn: true, seekSupport: false, other: "" },
+  constraints: { within30Days: true, executionNotExploration: true, maxTwoFollowOns: true, capped5k: true, total15k: true, acknowledged: false },
+  documents: [],
+  recordings: []
+});
+
+let state = initialState();
+const statusEl = document.getElementById("status");
+
+function setStatus(message, kind) {
+  statusEl.style.display = message ? "" : "none";
+  statusEl.className = kind || "";
+  statusEl.textContent = message || "";
+}
+
+function escapeHtml(value) {
+  return String(value == null ? "" : value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function render() {
+  renderCountries();
+  renderDeliverables();
+  renderEvidenceDocs();
+  renderRecordings();
+  renderBudget();
+  renderTimeline();
+  renderEvidenceRows();
+  renderNextSteps();
+  renderOutOfScope();
+  renderConstraints();
+  renderSummary();
+}
+
+// Countries chips
+function renderCountries() {
+  const root = document.getElementById("countriesRoot");
+  if (!root) return;
+  root.innerHTML = COUNTRIES.map((name) => {
+    const active = state.countries.includes(name);
+    return `<button type="button" class="chip${active ? " active" : ""}" data-country="${name.toLowerCase()}">${name}</button>`;
+  }).join("");
+  root.querySelectorAll(".chip").forEach((chip) => chip.addEventListener("click", () => {
+    const name = { uganda: "Uganda", tanzania: "Tanzania", kenya: "Kenya", nigeria: "Nigeria", usa: "USA" }[chip.getAttribute("data-country")] || chip.textContent;
+    const idx = state.countries.indexOf(name);
+    if (idx >= 0) state.countries.splice(idx, 1);
+    else state.countries.push(name);
+    renderCountries();
+  }));
+}
+
+// Deliverables
+function renderDeliverables() {
+  const root = document.getElementById("deliverablesRoot");
+  const html = state.deliverables.map((d, index) => `
+    <div class="field" style="margin-top:18px;">
+      <label>${escapeHtml(d.title)}</label>
+      <div class="field"><label for="del-${index}-description">Description (what will be built or produced?)</label><input id="del-${index}-description" type="text" value="${escapeHtml(d.description)}" data-index="${index}" data-part="description"></div>
+      <div class="field"><label for="del-${index}-why">Why this matters</label><textarea id="del-${index}-why" rows="6" data-index="${index}" data-part="why">${escapeHtml(d.why)}</textarea></div>
+      <div class="field"><label for="del-${index}-status">Build status for this deliverable</label><select id="del-${index}-status" data-index="${index}" data-part="status">
+        <option value="pending"${d.status === "pending" ? " selected" : ""}>Pending</option>
+        <option value="in_progress"${d.status === "in_progress" ? " selected" : ""}>In progress</option>
+        <option value="done"${d.status === "done" ? " selected" : ""}>Done</option>
+      </select></div>
+      <div class="field"><label for="del-${index}-notes">Planned notes (endpoints, URLs, dates)</label><input id="del-${index}-notes" type="text" placeholder="e.g. corridor endpoints, anchor URL, pilot dates" value="${escapeHtml(d.notes || "")}" data-index="${index}" data-part="notes"></div>
+    </div>`).join("");
+  root.innerHTML = html;
+  bindFields(root, "input, select, textarea", (el) => {
+    const index = Number(el.dataset.index);
+    const part = el.dataset.part;
+    state.deliverables[index][part] = el.value;
+  });
+}
+
+function renderEvidenceDocs() {
+  const root = document.getElementById("evidenceDocsRoot");
+  const general = document.getElementById("evidenceDocsGeneralRoot");
+  const html = state.deliverables.map((d, index) => `
+    <label class="file-card" for="evdoc-${index}">
+      <div class="file-title">${escapeHtml(d.title)} – evidence documents</div>
+      <div class="file-sub">Upload PDFs, docs, spreadsheets or images (optional)</div>
+      <ul id="evdoc-files-${index}"></ul>
+      <input type="file" id="evdoc-${index}" multiple accept="application/pdf,image/*,.doc,.docx,.xlsx,.xls,.csv,.txt,.ppt,.pptx" data-key="${d.id}" data-part="documents">
+    </label>`).join("");
+  root.innerHTML = html;
+  general.innerHTML = `
+    <label class="file-card" for="evdoc-general">
+      <div class="file-title">Additional supporting documents</div>
+      <div class="file-sub">Any other evidence files you want to include (optional)</div>
+      <ul id="evdoc-files-general"></ul>
+      <input type="file" id="evdoc-general" multiple accept="application/pdf,image/*,.doc,.docx,.xlsx,.xls,.csv,.txt,.ppt,.pptx">
+    </label>`;
+  bindFileInputs([...root.querySelectorAll("input[type=file]"), ...general.querySelectorAll("input[type=file]")]);
+}
+
+function renderRecordings() {
+  const root = document.getElementById("recordingsRoot");
+  const general = document.getElementById("recordingsGeneralRoot");
+  const html = state.deliverables.map((d, index) => `
+    <label class="file-card" for="rec-${index}">
+      <div class="file-title">${escapeHtml(d.title)} – recordings (e.g., Loom)</div>
+      <div class="file-sub">Upload video/audio recordings of demos or walkthroughs (optional)</div>
+      <ul id="rec-files-${index}"></ul>
+      <input type="file" id="rec-${index}" class="recording-input" multiple accept="video/mp4,video/webm,video/mov,video/x-msvideo,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/mp4,.mp4,.webm,.mov,.avi,.mp3,.wav,.m4a,.ogg" data-key="${d.id}" data-part="recordings">
+    </label>`).join("");
+  root.innerHTML = html;
+  general.innerHTML = `
+    <label class="file-card" for="rec-general">
+      <div class="file-title">Additional recordings (e.g., Loom)</div>
+      <div class="file-sub">Other video/audio recordings you want to include (optional)</div>
+      <ul id="rec-files-general"></ul>
+      <input type="file" id="rec-general" class="recording-input" multiple accept="video/mp4,video/webm,video/mov,video/x-msvideo,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/mp4,.mp4,.webm,.mov,.avi,.mp3,.wav,.m4a,.ogg">
+    </label>`;
+  bindFileInputs([...root.querySelectorAll("input[type=file]"), ...general.querySelectorAll("input[type=file]")]);
+}
+
+function renderBudget() {
+  const rowsRoot = document.getElementById("budgetRowsRoot");
+  const summaryRoot = document.getElementById("budgetSummaryRowsRoot");
+  const totalEl = document.getElementById("budgetTotal");
+  const summaryTotalEl = document.getElementById("budgetSummaryTotal");
+  rowsRoot.innerHTML = state.budget.map((row, index) => `
+    <tr>
+      <td><input type="text" value="${escapeHtml(row.activity)}" data-row="${index}" data-part="activity" aria-label="Activity ${index + 1}"></td>
+      <td style="color:var(--muted); font-size:12px;">${escapeHtml(row.deliverable)}</td>
+      <td style="text-align:right;"><input type="number" min="0" step="1" value="${escapeHtml(row.cost)}" data-row="${index}" data-part="cost" aria-label="Cost ${index + 1}" style="width:90px; text-align:right;"></td>
+    </tr>`).join("");
+  summaryRoot.innerHTML = state.budgetSummary.map((row, index) => `
+    <tr><td style="color:var(--muted); font-size:12px;">${escapeHtml(row.category)}</td><td style="text-align:right;"><span data-summary="${index}">${escapeHtml(row.amount)}</span></td></tr>`).join("");
+  const total = state.budget.reduce((sum, row) => sum + Number(row.cost || 0), 0);
+  totalEl.textContent = "$" + total;
+  summaryTotalEl.textContent = "$" + state.budget.reduce((sum, row) => sum + Number(row.cost || 0), 0);
+  bindFields(document, "input[data-row]", (el) => {
+    const row = state.budget[Number(el.dataset.row)];
+    row[el.dataset.part] = el.value;
+    if (el.dataset.part === "cost") renderBudgetTotals();
+  });
+}
+
+function renderBudgetTotals() {
+  const total = state.budget.reduce((sum, row) => sum + Number(row.cost || 0), 0);
+  document.getElementById("budgetTotal").textContent = "$" + total;
+  // Update the static budget summary total
+  const summaryTotal = state.budgetSummary.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  const summaryTotalEl = document.getElementById("budgetSummaryTotal");
+  if (summaryTotalEl) summaryTotalEl.textContent = "$" + summaryTotal;
+}
+
+function renderTimeline() {
+  const root = document.getElementById("timelineRoot");
+  root.innerHTML = state.timeline.map((row, index) => `
+    <div class="field" style="margin-top:16px; border:1px solid var(--border); border-radius:12px; padding:12px;">
+      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:baseline;"><span style="font-weight:800; color:var(--accent-strong);">${escapeHtml(row.week)}</span><span style="flex:1;"></span></div>
+      <div class="field"><label>Planned work</label><textarea rows="6" data-week="${index}" data-part="plannedWork">${escapeHtml(row.plannedWork)}</textarea></div>
+      <div class="field"><label>Expected output</label><textarea rows="4" data-week="${index}" data-part="expectedOutput">${escapeHtml(row.expectedOutput)}</textarea></div>
+    </div>`).join("");
+  bindFields(root, "textarea", (el) => {
+    state.timeline[Number(el.dataset.week)][el.dataset.part] = el.value;
+  });
+}
+
+function renderEvidenceRows() {
+  const root = document.getElementById("evidenceRowsRoot");
+  root.innerHTML = state.evidenceRows.map((row, index) => `
+    <div class="field" style="margin-top:16px; border:1px solid var(--border); border-radius:12px; padding:12px;">
+      <label style="font-weight:800;">${escapeHtml(row.deliverable)}</label>
+      <div class="field"><label for="evrow-${index}-type">Evidence type (link, repo, demo, screenshot, doc, tx hash, etc.)</label><input id="evrow-${index}-type" type="text" value="${escapeHtml(row.evidenceType)}" data-index="${index}" data-part="evidenceType"></div>
+      <div class="field"><label for="evrow-${index}-desc">Description</label><textarea id="evrow-${index}-desc" rows="6" data-index="${index}" data-part="description">${escapeHtml(row.description)}</textarea></div>
+      <div class="field"><label style="font-size:12px;">Evidence status</label>
+        <div class="checkbox-group" style="flex-direction:row; flex-wrap:wrap; gap:16px;">
+          <label><input type="checkbox" ${row.evidencePresent ? "checked" : ""} data-index="${index}" data-part="present"> Present</label>
+          <label><input type="checkbox" ${row.evidencePartial ? "checked" : ""} data-index="${index}" data-part="partial"> Partial</label>
+          <label><input type="checkbox" ${row.evidenceMissing ? "checked" : ""} data-index="${index}" data-part="missing"> Missing</label>
+        </div>
+      </div>
+      <div class="field"><label for="evrow-${index}-comments">Comments (for the Ambassador Chapter Lead)</label><input id="evrow-${index}-comments" type="text" placeholder="Any notes" value="${escapeHtml(row.comments || "")}" data-index="${index}" data-part="comments"></div>
+    </div>`).join("");
+  bindFields(root, "input[type=text], textarea", (el) => {
+    const row = state.evidenceRows[Number(el.dataset.index)];
+    row[el.dataset.part] = el.value;
+  });
+  bindFields(root, "input[type=checkbox]", (el) => {
+    const row = state.evidenceRows[Number(el.dataset.index)];
+    const part = el.dataset.part; // present / partial / missing
+    row.evidencePresent = false; row.evidencePartial = false; row.evidenceMissing = false;
+    row[part] = el.checked;
+  });
+}
+
+function renderNextSteps() {
+  const root = document.getElementById("nextStepRoot");
+  const items = [
+    ["applyScfBuild", "Apply to SCF Build Award"],
+    ["continueDev", "Continue development independently"],
+    ["followOn", "Apply for a follow-on Instaward (if eligible)"],
+    ["seekSupport", "Seek other ecosystem support"]
+  ];
+  root.innerHTML = items.map(([key, label]) => `<label><input type="checkbox" ${state.nextStep[key] ? "checked" : ""} data-key="${key}"> ${label}</label>`).join("");
+  root.querySelectorAll("input[type=checkbox]").forEach((input) => input.addEventListener("change", () => {
+    state.nextStep[input.dataset.key] = input.checked;
+  }));
+}
+
+function renderOutOfScope() {
+  const root = document.getElementById("outOfScopeRoot");
+  root.innerHTML = OUT_OF_SCOPE.map((item, index) => `<label><input type="checkbox" ${state.outOfScope[index] ? "checked" : ""} data-index="${index}"> ${escapeHtml(item)}</label>`).join("");
+  root.querySelectorAll("input[type=checkbox]").forEach((input) => input.addEventListener("change", () => {
+    state.outOfScope[Number(input.dataset.index)] = input.checked;
+  }));
+}
+
+function renderConstraints() {
+  const root = document.getElementById("constraintsRoot");
+  const items = [
+    ["within30Days", "This scope will be completed within 30 days or less."],
+    ["executionNotExploration", "Instawards support execution, not open-ended exploration."],
+    ["maxTwoFollowOns", "A project may receive no more than two follow-on Instawards."],
+    ["capped5k", "Each Instaward is capped at $5,000."],
+    ["total15k", "Total Instawards funding may not exceed $15,000."]
+  ];
+  root.innerHTML = items.map(([key, label]) => `<label><input type="checkbox" ${state.constraints[key] ? "checked" : ""} data-key="${key}"> ${label}</label>`).join("");
+  root.querySelectorAll("input[type=checkbox]").forEach((input) => input.addEventListener("change", () => {
+    state.constraints[input.dataset.key] = input.checked;
+  }));
+  const ack = document.getElementById("constraintsAck");
+  ack.checked = state.constraints.acknowledged;
+  ack.addEventListener("change", () => { state.constraints.acknowledged = ack.checked; });
+}
+
+function renderSummary() {
+  const el = document.getElementById("summary");
+  const budgetTotal = state.budget.reduce((sum, row) => sum + Number(row.cost || 0), 0);
+  const entries = [
+    ["Project", state.projectName],
+    ["Team", state.builderTeam],
+    ["Contact", state.contactName + " · " + state.contactEmail],
+    ["Countries (from start)", state.countries.join(", ")],
+    ["Budget total", "$" + budgetTotal],
+    ["Deliverables filled", state.deliverables.filter((d) => d.description.trim()).length + " / " + state.deliverables.length]
+  ];
+  el.innerHTML = "";
+  entries.forEach(([label, value]) => {
+    const dt = document.createElement("dt"); dt.textContent = label + ":";
+    const dd = document.createElement("dd"); dd.textContent = value;
+    el.appendChild(dt); el.appendChild(dd);
+  });
+}
+
+function bindFields(root, selector, apply) {
+  root.querySelectorAll(selector).forEach((el) => el.addEventListener("input", () => apply(el)));
+  root.querySelectorAll(selector).forEach((el) => el.addEventListener("change", () => apply(el)));
+}
+
+function bindFileInputs(inputs) {
+  inputs.forEach((input) => input.addEventListener("change", async () => {
+    const key = input.dataset.key || "general";
+    const isRecording = input.classList.contains("recording-input");
+    const target = isRecording ? state.recordings : state.documents;
+    const listId = isRecording ? (input.dataset.key ? "rec-files-" + DELIVERABLES.findIndex((d) => d.id === input.dataset.key) : "rec-files-general") : (input.dataset.key ? "evdoc-files-" + DELIVERABLES.findIndex((d) => d.id === input.dataset.key) : "evdoc-files-general");
+    const files = [...input.files];
+    const newEntries = [];
+    setStatus("Reading files…");
+    for (const file of files) {
+      const base64 = await toBase64(await file.arrayBuffer());
+      newEntries.push({ inputKey: key, element: input, name: file.name, size: file.size, type: file.type, base64, addedAt: new Date().toISOString() });
+    }
+    // Replace entries that belong to this input
+    for (let i = target.length - 1; i >= 0; i--) {
+      if (target[i].element === input) target.splice(i, 1);
+    }
+    target.push(...newEntries);
+    input.value = "";
+    renderFilesList(listId, isRecording);
+    render();
+    setStatus("Files read: " + (newEntries.length ? newEntries.map((e) => e.name).join(", ") : "no new files added."), "");
+  }));
+}
+
+function renderFilesList(listId, isRecording) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const targetEntries = isRecording ? state.recordings : state.documents;
+  const idSuffix = listId.replace(/^(evdoc|rec)-files-/, "");
+  const filtered = idSuffix === "general" ? targetEntries.filter((e) => e.inputKey === "general") : targetEntries.filter((e) => e.inputKey && DELIVERABLES[Number(idSuffix)] && e.inputKey === DELIVERABLES[Number(idSuffix)].id);
+  list.innerHTML = filtered.length
+    ? filtered.map((entry) => `<li><span>${escapeHtml(entry.name)} (${formatBytes(entry.size)})</span> <button type="button" class="remove-file" data-name="${encodeURIComponent(entry.name)}" data-input-key="${entry.inputKey}" data-is-recording="${isRecording}">×</button></li>`).join("")
+    : "<li style=\"color:var(--muted);\">None yet — optional</li>";
+  list.querySelectorAll(".remove-file").forEach((btn) => btn.addEventListener("click", () => {
+    const isRec = btn.dataset.isRecording === "true";
+    const target = isRec ? state.recordings : state.documents;
+    const key = btn.dataset.inputKey;
+    const name = decodeURIComponent(btn.dataset.name);
+    const index = target.findIndex((e) => e.inputKey === key && e.name === name);
+    if (index >= 0) target.splice(index, 1);
+    renderFilesList(listId, isRec);
+    render();
+    setStatus("File removed.", "");
+  }));
+}
+
+async function collectFiles() {
+  const inputs = [...document.querySelectorAll('input[type="file"]')];
+  const documents = [];
+  const recordings = [];
+  for (const input of inputs) {
+    const key = input.dataset.key || "general";
+    const isRecording = input.classList.contains("recording-input");
+    for (const file of [...input.files]) {
+      const base64 = await toBase64(await file.arrayBuffer());
+      (isRecording ? recordings : documents).push({ name: file.name, size: file.size, type: file.type, base64, addedAt: new Date().toISOString() });
+    }
+  }
+  return { documents, recordings };
+}
+
+function formatBytes(bytes) {
+  const size = Number(bytes) || 0;
+  if (size < 1024) return size + " B";
+  if (size < 1024 * 1024) return (size / 1024).toFixed(1) + " KB";
+  return (size / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function toBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunk, bytes.length)));
+  }
+  return btoa(binary);
+}
+
+// Static chips listener was replaced by renderCountries() — nothing to bind here.
+document.addEventListener("DOMContentLoaded", () => {
+  render();
+  const rangeEl = document.getElementById("progressPercent");
+  const numEl = document.getElementById("progressNumber");
+  const valueEl = document.getElementById("progressValue");
+  const syncPercent = () => {
+    const v = Number(rangeEl.value) || 0;
+    state.progressPercent = v;
+    numEl.value = v;
+    valueEl.textContent = v;
+  };
+  rangeEl.addEventListener("input", syncPercent);
+  numEl.addEventListener("input", () => {
+    const v = Math.min(100, Math.max(0, Math.round(Number(numEl.value) || 0)));
+    state.progressPercent = v;
+    rangeEl.value = v;
+    valueEl.textContent = v;
+  });
+
+  document.getElementById("swiftsendForm").addEventListener("submit", handleSubmit);
+  document.getElementById("downloadJson").addEventListener("click", () => downloadJson());
+  document.getElementById("resetForm").addEventListener("click", () => {
+    state = initialState();
+    render();
+    setStatus("Form reset to the defaults in the SOW document.", "");
+  });
+
+  // Progress slider initial sync
+  syncPercent();
+});
+
+function validate() {
+  const errors = [];
+  const required = [
+    ["Project name", state.projectName],
+    ["Primary contact (name)", state.contactName],
+    ["Primary contact (email)", state.contactEmail],
+    ["Ambassador chapter", state.ambassadorChapter],
+    ["Ambassador chapter lead", state.chapterLead]
+  ];
+  required.forEach(([label, value]) => {
+    if (!String(value || "").trim()) errors.push(label + " is required.");
+  });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.contactEmail || "")) errors.push("Primary contact (email) must be a valid email address.");
+  state.deliverables.forEach((d, index) => {
+    if (!d.description.trim()) errors.push("Deliverable " + (index + 1) + " description is required (one or more are unfilled).");
+  });
+  if (!state.constraints.acknowledged) errors.push("You must acknowledge the Instawards constraints before submitting.");
+  return errors;
+}
+
+async function handleSubmit(event) {
+  event.preventDefault();
+  const errors = validate();
+  if (errors.length) {
+    setStatus(errors.join(" "), "error");
+    window.scrollTo({ top: document.getElementById("swiftsendForm").offsetTop - 10, behavior: "smooth" });
+    return;
+  }
+  setStatus("Reading files…", "");
+  const { documents, recordings } = await collectFiles();
+  const payload = { ...state, documents, recordings, submittedAt: new Date().toISOString() };
+  payload.budgetTotal = state.budget.reduce((sum, row) => sum + Number(row.cost || 0), 0);
+  payload.countriesLabel = state.countries.join(", ");
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    downloadJson(payload);
+    setStatus("Saved. Your details were stored in this browser (localStorage) and downloaded as SwiftSend-Build-Progress.json — share or email the JSON for the Instawards submission.", "success");
+    renderSummary();
+  } catch (error) {
+    setStatus("Could not save the form to this browser. Check your storage and try again.", "error");
+  }
+}
+
+function downloadJson(payload) {
+  const data = payload || { ...state, submittedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "SwiftSend-Build-Progress.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// Render everything once on load; if a saved form exists, offer to restore it
+function restoreSavedForm() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const merged = { ...state, ...parsed };
+      merged.documents = parsed.documents || [];
+      merged.recordings = parsed.recordings || [];
+      state = merged;
+      setStatus("A saved form was found — loaded the previous data. Use ‘Save & submit’ to re-save it.", "");
+    }
+  } catch (error) {
+    // ignore corrupted data
+  }
+}
+
+window.addEventListener("load", () => {
+  restoreSavedForm();
+  render();
+});
+</script>
+</body>
+</html>
